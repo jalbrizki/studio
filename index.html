@@ -1,102 +1,231 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Produk Live MadGazan</title>
+<title>MadGazan Studio</title>
 
 <style>
-  body { font-family: Arial, sans-serif; margin: 15px; max-width: 900px; margin-inline:auto; background-color:#fffef9; }
-  h1,h2,h3 { color:#b36b00; text-align:center; }
-  h1 { font-size:1.6rem; margin-bottom:5px; }
-  h2 { font-size:1.2rem; margin-bottom:10px; }
-  textarea, select { width:100%; box-sizing:border-box; font-size:1rem; padding:8px; border-radius:6px; border:1px solid #ccc; resize:vertical; }
-  textarea { height:150px; }
-
-  #output { display:none; margin-top:10px; background:#fff; border-radius:8px; border:1px solid #ffd42a; padding:10px 15px; box-shadow:0 0 8px rgba(255,212,42,0.2);}
-
-  .link-item { display:flex; justify-content:space-between; align-items:center; background:#fffbec;
-    padding:8px 10px; border-bottom:1px dashed #ffd42a; border-radius:5px; margin-bottom:6px; }
-  .link-item a.link { color:#0066cc; text-decoration:none; word-break:break-all; flex:1; }
-  .link-item a.report { color:#cc0000; text-decoration:none; font-weight:bold; margin-left:10px; white-space:nowrap; }
-
-  .pagination { margin-top:15px; text-align:center; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
-  .page-btn { padding:10px 14px; cursor:pointer; border:1px solid #ccc; border-radius:6px; background-color:white; font-size:1rem; min-width:40px; }
-  .active { font-weight:bold; background-color:#ffd42a; color:#b36b00; border-color:#b36b00; }
-
-  #copyBtn { margin-top:12px; padding:12px; font-size:1rem; cursor:pointer; border:none; background-color:#ffd42a; color:#b36b00; border-radius:6px; width:100%; }
-
-  .input-buttons { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
-  .input-buttons button { flex:1; padding:10px; font-size:0.95rem; cursor:pointer; border:1px solid #ccc; border-radius:6px; background:#f5f5f5; }
-
-  #stats { margin:15px 0; font-weight:bold; font-size:1rem; white-space:pre-line; }
-
-  .sponsor { background-color:#fffae6; border:1px solid #ffd42a; padding:12px; margin:15px 0; font-weight:bold; text-align:center; color:#b36b00; border-radius:6px; }
-
-  .backup-area { margin-top:25px; padding:12px; background:#fffbe6; border-radius:8px; border:1px solid #ffd42a; text-align:center; }
-
-  #toast {
-    position: fixed; bottom: 25px; right: 25px; background: #333; color: #fff;
-    padding: 12px 20px; border-radius: 8px; opacity: 0; transform: translateY(20px);
-    transition: opacity 0.4s, transform 0.4s; z-index: 9999;
-    max-width: 320px; white-space: pre-line; font-size:0.95rem;
-  }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 900px;
+    }
+    select, button {
+        padding: 8px 12px;
+        margin: 5px 0;
+    }
+    #output {
+        margin-top: 10px;
+        white-space: pre-wrap;
+        background: #f7f7f7;
+        border: 1px solid #ccc;
+        padding: 12px;
+    }
+    #updateInfo {
+        margin-top: 10px;
+        font-weight: bold;
+    }
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>Produk Live MadGazan</h1>
-<h2>Manajemen Shopee Live V7</h2>
+<h2>MadGazan Studio</h2>
 
-<textarea id="inputLinks" placeholder="Masukkan ribuan link produk Shopee, satu per baris..."></textarea>
+<label>Pilih Toko:</label><br>
+<select id="tokoSelect" onchange="showSelectedData()"></select>
 
-<div class="input-buttons">
-  <button id="clearInputLinksBtn">Clear Input Links</button>
-  <button id="copyInputLinksBtn">Copy Input Links</button>
-  <button id="hapusDuplikatBtn">Hapus Duplikat</button>
-  <button id="sortirPerTokoBtn">Sortir Berdasarkan Toko</button>
-</div>
+<br><br>
 
-<h3>Daftar File TXT Produk</h3>
-<select id="fileDropdown">
-  <option value="">-- Pilih File TXT --</option>
-  <option value="jalb.txt">jalb.txt</option>
-  <option value="rano.txt">rano.txt</option>
-  <option value="indah.txt">indah.txt</option>
-  <option value="rini.txt">rini.txt</option>
-  <option value="nurbad.txt">nurbad.txt</option>
-</select>
+<button onclick="downloadSingle()">Download File Ini</button>
+<button onclick="downloadAllAsZip()">Download Semua (ZIP)</button>
+<button onclick="syncAllFiles()">Sync Semua → JSON</button>
 
-<div id="updateNotice" style="margin:10px 0; font-weight:bold;"></div>
+<p id="updateInfo">Memuat...</p>
 
-<div class="input-buttons">
-  <button id="ambilFileListLinksBtn">Download Terbaru Masal</button>
-</div>
+<h3>Isi Data:</h3>
+<pre id="output"></pre>
 
-<div class="sponsor">
-  Disponsori oleh <strong>MadGazan Studio</strong>
-</div>
+<!-- ZIP LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-<div id="stats"></div>
+<script>
+// ======================================================
+//  GLOBAL VARIABLE
+// ======================================================
+let serverData = {};
+let localData = {};
 
-<h3>Output (Produk Siap Live)</h3>
-<div id="output"></div>
-<button id="copyBtn" onclick="copyToClipboard()">Copy Link di Halaman Ini</button>
 
-<div class="pagination" id="pagination"></div>
+// ======================================================
+//  LOAD SERVER JSON (madgazan_backup.json)
+// ======================================================
+async function loadServerBackup() {
+    try {
+        const res = await fetch("db/madgazan_backup.json");
+        if (!res.ok) throw new Error("Gagal fetch JSON");
 
-<div class="backup-area">
-  <h3>🔒 Backup & Import Data</h3>
-  <div class="input-buttons">
-    <button onclick="exportLocalStorage()">Backup Data ke File</button>
-    <input type="file" id="importFile" accept=".json">
-    <button onclick="importLocalStorage()">Import Data</button>
-  </div>
-  <button style="margin-top:10px; background:#ffd0d0;" onclick="resetLocalStorage()">❌ Hapus Semua Data LocalStorage</button>
-  <button id="syncAllBtn" style="margin-top:15px; background:#d0ffd0;">🔄 Singkron Semua File TXT</button>
-</div>
+        serverData = await res.json();
 
-<footer style="text-align:center; margin-top:25px;">© 2025 MadGazan Studio — Semua Hak Dilindungi</footer>
+        populateDropdown();
+        checkForUpdates();
 
-<div id="toast"></div>
+    } catch (e) {
+        console.error(e);
+        alert("Gagal memuat 'madgazan_backup.json'");
+    }
+}
+
+
+// ======================================================
+//  LOAD LOCAL STORAGE
+// ======================================================
+function loadLocalBackup() {
+    localData = {};
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+
+        if (key.startsWith("appData_")) {
+            try {
+                localData[key] = JSON.parse(localStorage.getItem(key));
+            } catch {
+                localData[key] = localStorage.getItem(key);
+            }
+        }
+    }
+}
+
+
+// ======================================================
+//  POPULATE DROPDOWN
+// ======================================================
+function populateDropdown() {
+    const select = document.getElementById("tokoSelect");
+    select.innerHTML = "";
+
+    Object.keys(serverData).forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name.replace("appData_", "").replace(".txt", "");
+        select.appendChild(opt);
+    });
+}
+
+
+// ======================================================
+//  TAMPILKAN ISI DATA TOKO
+// ======================================================
+function showSelectedData() {
+    const file = document.getElementById("tokoSelect").value;
+    const area = document.getElementById("output");
+
+    if (!file || !serverData[file]) {
+        area.textContent = "Tidak ada data.";
+        return;
+    }
+
+    area.textContent = serverData[file];
+}
+
+
+// ======================================================
+//  DOWNLOAD SINGLE FILE
+// ======================================================
+function downloadSingle() {
+    const file = document.getElementById("tokoSelect").value;
+    if (!file) return alert("Pilih toko dulu.");
+
+    triggerDownload(file, serverData[file]);
+}
+
+function triggerDownload(filename, text) {
+    const blob = new Blob([text], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+
+// ======================================================
+//  DOWNLOAD SEMUA DALAM ZIP
+// ======================================================
+async function downloadAllAsZip() {
+    const zip = new JSZip();
+
+    Object.keys(serverData).forEach(name => {
+        zip.file(name, serverData[name]);
+    });
+
+    const blob = await zip.generateAsync({ type: "blob" });
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "madgazan_backup_all.zip";
+    a.click();
+}
+
+
+// ======================================================
+//  SYNC LOCAL STORAGE → JSON
+// ======================================================
+function syncAllFiles() {
+    loadLocalBackup();
+
+    const merged = {};
+
+    // isi lokal
+    Object.keys(localData).forEach(k => {
+        merged[k] = JSON.stringify(localData[k]);
+    });
+
+    // tambahkan yg belum ada dari server
+    Object.keys(serverData).forEach(k => {
+        if (!merged[k]) merged[k] = serverData[k];
+    });
+
+    const finalJson = JSON.stringify(merged, null, 2);
+
+    triggerDownload("madgazan_backup_UPDATED.json", finalJson);
+}
+
+
+// ======================================================
+//  CEK PERBEDAAN SERVER VS LOCAL STORAGE
+// ======================================================
+function checkForUpdates() {
+    loadLocalBackup();
+
+    let diff = [];
+
+    Object.keys(serverData).forEach(file => {
+        const serverFile = serverData[file];
+        const localFile = localData[file] ? JSON.stringify(localData[file]) : null;
+
+        if (serverFile !== localFile) {
+            diff.push(file);
+        }
+    });
+
+    document.getElementById("updateInfo").textContent =
+        diff.length ? "File berbeda: " + diff.join(", ") : "Semua file sama.";
+}
+
+
+// ======================================================
+//  PAGE LOAD
+// ======================================================
+window.onload = () => {
+    loadLocalBackup();
+    loadServerBackup();
+};
+</script>
+
+</body>
+</html>
