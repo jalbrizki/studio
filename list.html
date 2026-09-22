@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Data</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f5f7;
+    color: #222;
+}
+.container {
+    max-width: 650px;
+    margin: auto;
+    padding: 10px;
+}
+.header {
+    background: #fff;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.header h1 {
+    margin: 0 0 5px;
+    font-size: 21px;
+}
+.progress {
+    font-size: 13px;
+    color: #666;
+}
+.progress-bar {
+    height: 7px;
+    background: #e5e5e5;
+    border-radius: 10px;
+    margin-top: 9px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #20a464;
+    transition: width .2s;
+}
+.add-box {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 10px;
+}
+.add-box input {
+    flex: 1;
+    min-width: 0;
+}
+input {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 15px;
+    outline: none;
+}
+input:focus {
+    border-color: #888;
+}
+button {
+    border: 0;
+    border-radius: 9px;
+    padding: 10px 13px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-add {
+    background: #222;
+    color: white;
+    white-space: nowrap;
+}
+.tools {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.search {
+    flex: 1;
+    min-width: 0;
+}
+.filters {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+.filter {
+    background: white;
+    color: #555;
+    white-space: nowrap;
+}
+.filter.active {
+    background: #222;
+    color: white;
+}
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+/* =========================
+   ITEM
+========================= */
+.item {
+    background: white;
+    border-radius: 11px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin: 0;
+}
+/* =========================
+   NAMA DATA
+========================= */
+.item-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+}
+.item.done .item-text {
+    text-decoration: line-through;
+    color: #999;
+}
+/* =========================
+   TOMBOL AKSI
+========================= */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+}
+.actions button {
+    width: 28px;
+    min-width: 28px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 13px;
+}
+.btn-move {
+    background: #f0f0f0;
+    font-size: 13px !important;
+}
+.btn-move:active {
+    transform: scale(.90);
+}
+.btn-move.disabled {
+    opacity: .30;
+    pointer-events: none;
+}
+.btn-edit {
+    background: #eee;
+}
+.btn-delete {
+    background: #ffe8e8;
+    color: #c00;
+}
+/* =========================
+   DATA KOSONG
+========================= */
+.empty {
+    text-align: center;
+    background: white;
+    border-radius: 12px;
+    padding: 30px 15px;
+    color: #888;
+}
+/* =========================
+   FOOTER
+========================= */
+.footer {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+.btn-clear {
+    background: #fff;
+    color: #c00;
+}
+/* =========================
+   BACKUP / RESTORE
+========================= */
+.backup-area {
+    display: flex;
+    gap: 7px;
+    margin-top: 8px;
+}
+.btn-backup {
+    flex: 1;
+    background: #222;
+    color: #fff;
+}
+.btn-restore {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #222;
+}
+#restoreInput {
+    display: none;
+}
+/* =========================
+   HP KECIL
+========================= */
+@media (max-width: 500px) {
+    .container {
+        padding: 7px;
+    }
+    .item {
+        padding: 7px;
+        gap: 4px;
+    }
+    .checkbox {
+        width: 19px;
+        height: 19px;
+    }
+    .item-text {
+        font-size: 13px;
+    }
+    .actions {
+        gap: 2px;
+    }
+    .actions button {
+        width: 26px;
+        min-width: 26px;
+        height: 29px;
+        font-size: 12px;
+    }
+    .btn-move {
+        font-size: 12px !important;
+    }
+    .btn-edit {
+        font-size: 0 !important;
+    }
+    .btn-edit::after {
+        content: "✏️";
+        font-size: 12px;
+    }
+    .btn-delete {
+        font-size: 14px !important;
+    }
+    .backup-area {
+        gap: 5px;
+    }
+    .btn-backup,
+    .btn-restore {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+}
+/* =========================
+   HP SANGAT KECIL
+========================= */
+@media (max-width: 360px) {
+    .item {
+        gap: 3px;
+        padding: 6px;
+    }
+    .actions button {
+        width: 24px;
+        min-width: 24px;
+        height: 27px;
+    }
+    .item-text {
+        font-size: 12px;
+    }
+    .btn-move {
+        font-size: 11px !important;
+    }
+    .btn-edit::after {
+        font-size: 11px;
+    }
+    .btn-delete {
+        font-size: 13px !important;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Checklist Data</h1>
+        <div class="progress" id="progressText">
+            0 dari 0 selesai
+        </div>
+        <div class="progress-bar">
+            <div
+                class="progress-fill"
+                id="progressFill">
+            </div>
+        </div>
+    </div>
+    <div class="add-box">
+        <input
+            type="text"
+            id="dataInput"
+            placeholder="Masukkan data..."
+            autocomplete="off">
+        <button
+            class="btn-add"
+            onclick="addData()">
+            + Tambah
+        </button>
+    </div>
+    <div class="tools">
+        <input
+            class="search"
+            type="text"
+            id="searchInput"
+            placeholder="Cari data..."
+            oninput="render()">
+    </div>
+    <div class="filters">
+        <button
+            class="filter active"
+            id="filterAll"
+            onclick="setFilter('all')">
+            Semua
+        </button>
+        <button
+            class="filter"
+            id="filterTodo"
+            onclick="setFilter('todo')">
+            Belum selesai
+        </button>
+        <button
+            class="filter"
+            id="filterDone"
+            onclick="setFilter('done')">
+            Selesai
+        </button>
+    </div>
+    <br>
+    <div
+        class="list"
+        id="list">
+    </div>
+    <div class="footer">
+        <button
+            class="btn-clear"
+            onclick="clearCompleted()">
+            Hapus yang selesai
+        </button>
+        <button
+            class="btn-clear"
+            onclick="clearAll()">
+            Hapus semua
+        </button>
+    </div>
+    <!-- BACKUP / RESTORE -->
+    <div class="backup-area">
+        <button
+            class="btn-backup"
+            onclick="backupData()">
+            💾 Backup
+        </button>
+        <button
+            class="btn-restore"
+            onclick="document.getElementById('restoreInput').click()">
+            📂 Restore
+        </button>
+        <input
+            type="file"
+            id="restoreInput"
+            accept=".json,application/json"
+            onchange="restoreData(event)">
+    </div>
+</div>
+<script>
+const STORAGE_KEY = "checklist_data_v1";
+let data = [];
+let currentFilter = "all";
+// =================================
+// LOAD DATA
+// =================================
+function loadData() {
+    try {
+        const saved =
+            localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            data = JSON.parse(saved);
+        }
+    } catch (error) {
+        data = [];
+    }
+}
+// =================================
+// SAVE DATA
+// =================================
+function saveData() {
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(data)
+    );
+}
+// =================================
+// TAMBAH DATA
+// =================================
+function addData() {
+    const input =
+        document.getElementById("dataInput");
+    const text =
+        input.value.trim();
+    if (!text) {
+        input.focus();
+        return;
+    }
+    data.push({
+        id: Date.now(),
+        text: text,
+        done: false
+    });
+    saveData();
+    input.value = "";
+    input.focus();
+    render();
+}
+// =================================
+// ENTER UNTUK TAMBAH
+// =================================
+document
+.getElementById("dataInput")
+.addEventListener(
+    "keydown",
+    function(e) {
+        if (e.key === "Enter") {
+            addData();
+        }
+    }
+);
+// =================================
+// CHECK / UNCHECK
+// =================================
+function toggleData(id) {
+    const item =
+        data.find(x => x.id === id);
+    if (!item) return;
+    item.done = !item.done;
+    saveData();
+    render();
+}
+// =================================
+// EDIT DATA
+// =================================
+function editData(id) {
+    const item =
+        data.find(x => x.id === id);
+    if (!item) return;
+    const newText =
+        prompt(
+            "Edit data:",
+            item.text
+        );
+    if (newText === null) return;
+    const text =
+        newText.trim();
+    if (!text) return;
+    item.text = text;
+    saveData();
+    render();
+}
+// =================================
+// DELETE DATA
+// =================================
+function deleteData(id) {
+    const item =
+        data.find(x => x.id === id);
+    if (!item) return;
+    const yakin =
+        confirm(
+            "Hapus data ini?"
+        );
+    if (!yakin) return;
+    data =
+        data.filter(
+            x => x.id !== id
+        );
+    saveData();
+    render();
+}
+// =================================
+// PINDAH DATA
+// =================================
+function moveData(id, direction) {
+    const index =
+        data.findIndex(
+            x => x.id === id
+        );
+    if (index === -1) return;
+    if (direction === "top") {
+        if (index === 0) return;
+        const item =
+            data.splice(index, 1)[0];
+        data.unshift(item);
+    }
+    else if (direction === "up") {
+        if (index === 0) return;
+        [
+            data[index - 1],
+            data[index]
+        ] =
+        [
+            data[index],
+            data[index - 1]
+        ];
+    }
+    else if (direction === "down") {
+        if (
+            index === data.length - 1
+        ) return;
+        [
+            data[index],
+            data[index + 1]
+        ] =
+        [
+            data[index + 1],
+            data[index]
+        ];
+    }
+    else if (direction === "bottom") {
+        if (
+            index === data.length - 1
+        ) return;
+        const item =
+            data.splice(index, 1)[0];
+        data.push(item);
+    }
+    saveData();
+    render();
+}
+// =================================
+// FILTER
+// =================================
+function setFilter(filter) {
+    currentFilter = filter;
+    document
+        .getElementById("filterAll")
+        .classList.remove("active");
+    document
+        .getElementById("filterTodo")
+        .classList.remove("active");
+    document
+        .getElementById("filterDone")
+        .classList.remove("active");
+    if (filter === "all") {
+        document
+            .getElementById("filterAll")
+            .classList.add("active");
+    }
+    if (filter === "todo") {
+        document
+            .getElementById("filterTodo")
+            .classList.add("active");
+    }
+    if (filter === "done") {
+        document
+            .getElementById("filterDone")
+            .classList.add("active");
+    }
+    render();
+}
+// =================================
+// RENDER
+// =================================
+function render() {
+    const list =
+        document.getElementById("list");
+    const search =
+        document
+            .getElementById("searchInput")
+            .value
+            .toLowerCase()
+            .trim();
+    let filtered =
+        data.filter(item => {
+            if (
+                search &&
+                !item.text
+                    .toLowerCase()
+                    .includes(search)
+            ) {
+                return false;
+            }
+            if (
+                currentFilter === "todo" &&
+                item.done
+            ) {
+                return false;
+            }
+            if (
+                currentFilter === "done" &&
+                !item.done
+            ) {
+                return false;
+            }
+            return true;
+        });
+    list.innerHTML = "";
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="empty">
+                Tidak ada data.
+            </div>
+        `;
+        updateProgress();
+        return;
+    }
+    filtered.forEach(item => {
+        const index =
+            data.findIndex(
+                x => x.id === item.id
+            );
+        const isFirst =
+            index === 0;
+        const isLast =
+            index === data.length - 1;
+        const div =
+            document.createElement("div");
+        div.className =
+            "item" +
+            (item.done ? " done" : "");
+        div.innerHTML = `
+            <input
+                class="checkbox"
+                type="checkbox"
+                ${item.done ? "checked" : ""}
+                onchange="
+                    toggleData(${item.id})
+                ">
+            <div class="item-text">
+                ${escapeHTML(item.text)}
+            </div>
+            <div class="actions">
+                <button
+                    class="btn-move ${isFirst ? "disabled" : ""}"
+                    onclick="
+                        moveData(
+                            ${item.id},
+                            'top'
+                        )
+                    "
+                    title="Paling atas">
+                    ⏫️
+                </button>
+                <button
+                    class="btn-move ${isFirst ? "disabled" : ""}"
+                    onclick="
+                        moveData(
+                            ${item.id},
+                            'up'
+                        )
+                    "
+                    title="Naik satu">
+                    ⬆️
+                </button>
+                <button
+                    class="btn-move ${isLast ? "disabled" : ""}"
+                    onclick="
+                        moveData(
+                            ${item.id},
+                            'down'
+                        )
+                    "
+                    title="Turun satu">
+                    ⬇️
+                </button>
+                <button
+                    class="btn-move ${isLast ? "disabled" : ""}"
+                    onclick="
+                        moveData(
+                            ${item.id},
+                            'bottom'
+                        )
+                    "
+                    title="Paling bawah">
+                    ⏬️
+                </button>
+                <button
+                    class="btn-edit"
+                    onclick="
+                        editData(${item.id})
+                    ">
+                    Edit
+                </button>
+                <button
+                    class="btn-delete"
+                    onclick="
+                        deleteData(${item.id})
+                    ">
+                    ×
+                </button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    updateProgress();
+}
+// =================================
+// PROGRESS
+// =================================
+function updateProgress() {
+    const total =
+        data.length;
+    const done =
+        data.filter(
+            item => item.done
+        ).length;
+    const percentage =
+        total === 0
+        ? 0
+        : Math.round(
+            (done / total) * 100
+        );
+    document
+        .getElementById("progressText")
+        .textContent =
+        `${done} dari ${total} selesai (${percentage}%)`;
+    document
+        .getElementById("progressFill")
+        .style.width =
+        percentage + "%";
+}
+// =================================
+// HAPUS YANG SELESAI
+// =================================
+function clearCompleted() {
+    const completed =
+        data.filter(
+            x => x.done
+        ).length;
+    if (completed === 0) return;
+    const yakin =
+        confirm(
+            `Hapus ${completed} data yang sudah selesai?`
+        );
+    if (!yakin) return;
+    data =
+        data.filter(
+            x => !x.done
+        );
+    saveData();
+    render();
+}
+// =================================
+// HAPUS SEMUA
+// =================================
+function clearAll() {
+    if (data.length === 0) return;
+    const yakin =
+        confirm(
+            "Hapus SEMUA data?"
+        );
+    if (!yakin) return;
+    data = [];
+    saveData();
+    render();
+}
+// =================================
+// BACKUP DATA
+// =================================
+function backupData() {
+    if (data.length === 0) {
+        alert("Belum ada data untuk di-backup.");
+        return;
+    }
+    const backup = {
+        app: "Checklist Data",
+        version: 1,
+        createdAt:
+            new Date().toISOString(),
+        data: data
+    };
+    const json =
+        JSON.stringify(
+            backup,
+            null,
+            2
+        );
+    const blob =
+        new Blob(
+            [json],
+            {
+                type: "application/json"
+            }
+        );
+    const url =
+        URL.createObjectURL(blob);
+    const a =
+        document.createElement("a");
+    const tanggal =
+        new Date()
+        .toISOString()
+        .slice(0, 10);
+    a.href = url;
+    a.download =
+        `checklist-backup-${tanggal}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+// =================================
+// RESTORE DATA
+// =================================
+function restoreData(event) {
+    const file =
+        event.target.files[0];
+    if (!file) return;
+    const reader =
+        new FileReader();
+    reader.onload =
+        function(e) {
+            try {
+                const backup =
+                    JSON.parse(
+                        e.target.result
+                    );
+                let restoredData;
+                /*
+                 * Format backup baru
+                 */
+                if (
+                    backup &&
+                    Array.isArray(
+                        backup.data
+                    )
+                ) {
+                    restoredData =
+                        backup.data;
+                }
+                /*
+                 * Dukungan jika file
+                 * hanya berisi array data
+                 */
+                else if (
+                    Array.isArray(backup)
+                ) {
+                    restoredData =
+                        backup;
+                }
+                else {
+                    throw new Error(
+                        "Format file tidak valid"
+                    );
+                }
+                /*
+                 * Validasi sederhana
+                 */
+                restoredData =
+                    restoredData
+                    .filter(item =>
+                        item &&
+                        typeof item.text === "string"
+                    )
+                    .map(item => ({
+                        id:
+                            Number.isFinite(
+                                item.id
+                            )
+                            ? item.id
+                            : Date.now() +
+                              Math.random(),
+                        text:
+                            item.text,
+                        done:
+                            item.done === true
+                    }));
+                if (
+                    restoredData.length === 0
+                ) {
+                    alert(
+                        "File backup tidak berisi data."
+                    );
+                    return;
+                }
+                const yakin =
+                    confirm(
+                        "Restore akan mengganti data saat ini dengan data dari backup. Lanjutkan?"
+                    );
+                if (!yakin) return;
+                data =
+                    restoredData;
+                saveData();
+                render();
+                alert(
+                    `Restore berhasil. ${data.length} data dipulihkan.`
+                );
+            }
+            catch(error) {
+                alert(
+                    "Gagal restore. File JSON tidak valid atau rusak."
+                );
+            }
+            /*
+             * Reset input supaya file
+             * yang sama bisa dipilih lagi
+             */
+            event.target.value = "";
+        };
+    reader.readAsText(file);
+}
+// =================================
+// AMANKAN HTML
+// =================================
+function escapeHTML(text) {
+    return text
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+// =================================
+// START
+// =================================
+loadData();
+render();
+</script>
+</body>
+</html>
